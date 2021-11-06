@@ -46,104 +46,31 @@ def update(curr_grid):
 
 def num_neighbours(grid, i, j):
     counter = 0
-    
-    #top left corner
-    if i == 0 and j == 0:
-        if grid[i][j+1] == 1:
-            counter += 1
-        if grid[i+1][j+1] == 1:
-            counter += 1
-        if grid[i+1][j]:
-            counter += 1
-    #top right corner
-    elif i == 0 and j == len(grid[0])-1:
-        if grid[i][j-1] == 1:
-            counter += 1
-        if grid[i+1][j-1] == 1:
-            counter += 1
-        if grid[i+1][j] == 1:
-            counter += 1
-    #bottom left corner
-    elif i == len(grid)-1 and j == 0:
-        if grid[i-1][j]:
-            counter += 1
-        if grid[i-1][j+1]:
-            counter += 1
-        if grid[i][j+1]:
-            counter += 1
-    #bottom right corner
-    elif i == len(grid)-1 and j == len(grid[0])-1:
-        if grid[i-1][j-1] == 1:
-            counter += 1
-        if grid[i-1][j] == 1:
-            counter += 1
-        if grid[i][j-1] == 1:
-            counter += 1
-    #top row
-    elif i == 0 and j != 0:
-        if grid[i+1][j+1] == 1:
-            counter += 1
-        if grid[i+1][j] == 1:
-            counter += 1
-        if grid[i+1][j-1] == 1:
-            counter += 1
-
-    #left column
-    elif j == 0 and i != 0:
-        if grid[i-1][j+1] == 1:
-            counter += 1
-        if grid[i][j+1] == 1:
-            counter += 1
-        if grid[i+1][j+1] == 1:
-            counter += 1
-        if grid[i-1][j] == 1:
-            counter += 1
-        if grid[i+1][j] == 1:
-            counter += 1
-    #right column
-    elif j == len(grid[0])-1:
-        if grid[i-1][j-1] == 1:
-            counter += 1
-        if grid[i][j-1] == 1:
-            counter += 1
-        if grid[i+1][j-1] == 1:
-            counter += 1
-        if grid[i-1][j] == 1:
-            counter += 1
-        if grid[i+1][j] == 1:
-            counter += 1
-    #bottom row
-    elif i == len(grid[0])-1:
-        if grid[i-1][j-1] == 1:
-            counter += 1
-        if grid[i-1][j] == 1:
-            counter += 1
-        if grid[i-1][j+1] == 1:
-            counter += 1
-        if grid[i][j-1] == 1:
-            counter += 1
-        if grid[i][j+1] == 1:
-            counter += 1
-    else:
-        if grid[i-1][j-1] == 1:
-            counter += 1
-        if grid[i-1][j] == 1:
-            counter += 1
-        if grid[i-1][j+1]:
-            counter += 1
-        if grid[i][j-1] == 1:
-            counter += 1
-        if grid[i][j+1] == 1:
-            counter += 1
-        if grid[i+1][j-1] == 1:
-            counter += 1
-        if grid[i+1][j] == 1:
-            counter += 1
-        if grid[i+1][j+1] == 1:
-            counter += 1
+    if grid[i-1][j-1] == 1:
+        counter += 1
+    if grid[i-1][j] == 1:
+        counter += 1
+    if grid[i-1][j+1]:
+        counter += 1
+    if grid[i][j-1] == 1:
+        counter += 1
+    if grid[i][j+1] == 1:
+        counter += 1
+    if grid[i+1][j-1] == 1:
+        counter += 1
+    if grid[i+1][j] == 1:
+        counter += 1
+    if grid[i+1][j+1] == 1:
+        counter += 1
 
     return counter
 
+def add_border(grid):
+    x = np.pad(grid, pad_width=1, mode='constant', constant_values=0)
+    print(x)
+    return x
+
+#input matrix
 grid = [[0,0,1,0,0,0,0,0,0,0,0,0],
         [1,0,1,0,0,0,0,0,0,0,0,0],
         [0,1,1,0,0,0,0,0,1,1,1,0],
@@ -151,21 +78,14 @@ grid = [[0,0,1,0,0,0,0,0,0,0,0,0],
         [0,0,1,0,1,0,0,0,0,0,0,0],
         [0,0,0,1,1,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,1,1,0,0],
-        [0,0,0,0,0,0,0,1,1,0,0,0],
-        [0,0,0,0,0,0,0,0,1,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0],]
+        [0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,0,0,0,0,0,0,0,0,1,0,0],]
 
-##for i in range(10):
-##    print("===")
-##    for x in range(len(grid)):
-##        print(grid[x])
-##
-##    new = update(grid)
-##    print("===")
-##    for y in range(len(new)):
-##        print(new[y])
-##    grid = new
+#add padding
+grid = add_border(grid)
+
 
 fig, ax = plt.subplots()
 ims = []

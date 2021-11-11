@@ -10,13 +10,7 @@ If a cell is ON and has either two or three neighbors that are ON, it remains ON
 If a cell is ON and has more than three neighbors that are ON, it turns OFF.
 If a cell is OFF and has exactly three neighbors that are ON, it turns ON.
 ====
-1. Initialize the cells in the grid.
-2. At each time step in the simulation, for each 
-   cell (i, j) in the grid, do the following:
-   a. Update the value of cell (i, j) based on 
-      its neighbors, taking into account the 
-      boundary conditions.
-   b. Update the display of grid values.
+glider
 
    - - x
    x - x
@@ -70,7 +64,7 @@ def add_border(grid):
     print(x)
     return x
 
-#input matrix
+#read input matrix
 with open('input_matrix.txt', 'r') as f:
     grid = [[int(num) for num in line.split(',')] for line in f]
 
@@ -79,6 +73,7 @@ with open('input_matrix.txt', 'r') as f:
 grid = add_border(grid)
 
 
+#animate frame by frame
 fig, ax = plt.subplots()
 ims = []
 

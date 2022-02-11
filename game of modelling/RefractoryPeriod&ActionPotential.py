@@ -1,17 +1,12 @@
 import numpy as np
-import argparse
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.colors import ListedColormap
 import copy
 import time 
 
 
 """
-If a cell is ON and has fewer than two neighbors that are ON, it turns OFF
-If a cell is ON and has either two or three neighbors that are ON, it remains ON.
-If a cell is ON and has more than three neighbors that are ON, it turns OFF.
-If a cell is OFF and has exactly three neighbors that are ON, it turns ON.
-====
 Aims:
 - add refractory period
 - add threshold potential
@@ -34,13 +29,13 @@ When the cell is off:
 '''
 
 #set amplitude of stimulation
-AMPLITUDE = 0.1
+AMPLITUDE = 0.25
 
 #threshold for each cell
-THRESHOLD = 0.2
+THRESHOLD = 0.5
 
 #refractory period
-REFRACTORY_PERIOD = 0.2
+REFRACTORY_PERIOD = 0.5
 
 #time active
 ACTIVE_TIME = 1.5
@@ -48,9 +43,17 @@ ACTIVE_TIME = 1.5
 #start time
 START_TIME = time.time() 
 
+RADIUS = 3
+
 def start_timer():
     #in milliseconds
     return round(time.time() * 1000)
+
+'''
+ap - action potential
+rp - refractory period
+at - active time
+'''
 
 #for one cell, c, find it's neighbours
 def update(curr_display_grid, curr_rp_grid, curr_ap_grid, curr_at_grid):
@@ -63,9 +66,9 @@ def update(curr_display_grid, curr_rp_grid, curr_ap_grid, curr_at_grid):
     
 
 
-    for i in range(len(curr_display_grid)-1): 
-        for j in range(len(curr_display_grid[0])-1):
-            ap = neighbour_ap(curr_display_grid, i, j)
+    for i in range(len(curr_display_grid)): 
+        for j in range(len(curr_display_grid[0])):
+            ap = neighbour_ap(curr_display_grid, i, j, RADIUS)
             new_rp_time = time_elapsed(curr_rp_grid, i, j)
             at_time = time_elapsed(curr_at_grid, i, j)
             curr_ap_grid[i][j] = ap
@@ -84,16 +87,19 @@ def update(curr_display_grid, curr_rp_grid, curr_ap_grid, curr_at_grid):
             #when current cell is OFF
             if curr_display_grid[i][j] == 0:
                 #cell turns ON if 
-                    #stimulated above threshold
-                    #past refractory period
+                #stimulated above threshold
+                #past refractory period
                 new_ap_grid[i][j] = ap
-                if ap >= THRESHOLD and new_rp_time >= REFRACTORY_PERIOD:
+                if (ap >= THRESHOLD and (new_rp_time >= 
+                        REFRACTORY_PERIOD)) or (ap >= THRESHOLD and new_rp_time == 0):
                     new_display_grid[i][j] = 1
                     new_ap_grid[i][j] = 0
                     #rp starts from 0
                     new_rp_grid[i][j] = 0
                     #gets current time, where cell starts being active
                     new_at_grid[i][j] = start_timer()
+
+
 
 
     return new_display_grid, new_rp_grid, new_ap_grid, new_at_grid
@@ -104,31 +110,41 @@ def time_elapsed(rp_grid, i, j):
 
     return time_elapsed
 
+def get_cell(grid, i):
+    cell = i
+    if i > len(grid) - 1:
+        cell = i - len(grid) - 1
+    if i < 0:
+        cell = len(grid) + i - 1
+    return cell
 
-def neighbour_ap(ap_grid, i, j):
+
+
+
+def neighbour_ap(ap_grid, i, j, radius):
     counter = 0
-    if ap_grid[i-1][j-1] == 1:
+    if ap_grid[get_cell(ap_grid, i-radius)][get_cell(ap_grid, j-radius)] == 1:
         counter += AMPLITUDE
-    if ap_grid[i-1][j] == 1:
+    if ap_grid[get_cell(ap_grid, i-radius)][j] == 1:
         counter += AMPLITUDE
-    if ap_grid[i-1][j+1]:
+    if ap_grid[get_cell(ap_grid, i-radius)][get_cell(ap_grid, j+radius)]:
         counter += AMPLITUDE
-    if ap_grid[i][j-1] == 1:
+    if ap_grid[i][get_cell(ap_grid, j-radius)] == 1:
         counter += AMPLITUDE
-    if ap_grid[i][j+1] == 1:
+    if ap_grid[i][get_cell(ap_grid, j+radius)] == 1:
         counter += AMPLITUDE
-    if ap_grid[i+1][j-1] == 1:
+    if ap_grid[get_cell(ap_grid, i+radius)][get_cell(ap_grid, j-radius)] == 1:
         counter += AMPLITUDE
-    if ap_grid[i+1][j] == 1:
+    if ap_grid[get_cell(ap_grid, i+radius)][j] == 1:
         counter += AMPLITUDE
-    if ap_grid[i+1][j+1] == 1:
+    if ap_grid[get_cell(ap_grid, i+radius)][get_cell(ap_grid, j+radius)] == 1:
         counter += AMPLITUDE
 
     return counter
 
 
 def add_border(grid):
-    x = np.pad(grid, pad_width=1, mode='constant', constant_values=0)
+    x = np.pad(grid, pad_width=RADIUS, mode='constant', constant_values=0)
     print(x)
     return x
 
@@ -138,8 +154,9 @@ with open('input_matrix.txt', 'r') as f:
     og_grid = [[float(num) for num in line.split(',')] for line in f]
 
 
-#add padding
-og_grid = add_border(og_grid)
+
+# #add padding
+# og_grid = add_border(og_grid)
 #refractory period and action potential grid
 size = (len(og_grid), len(og_grid))
 rp_grid = np.zeros(size)
@@ -148,16 +165,23 @@ at_grid = np.full(size, START_TIME)
 
 
 
+#fixing colours to numbers
+cmap = ListedColormap(['r', 'y', 'k'])
+
 #animate frame by frame
 fig, ax = plt.subplots()
+ax.axis(False)
 ims = []
 
 for i in range(100):
     if i == 0:
-        ax.imshow(og_grid)
+        ax.imshow(og_grid,cmap=cmap)
     new = update(og_grid, rp_grid, ap_grid, at_grid)
     og_grid, rp_grid, ap_grid, at_grid = new
-    im = ax.imshow(og_grid, animated=True)
+    # #removes padding for displaying
+    # og_grid = np.delete(og_grid,np.where(~og_grid.any(axis=0))[0], axis=1)
+    # og_grid = np.delete(og_grid,np.where(~og_grid.any(axis=1))[0], axis=0)
+    im = ax.imshow(og_grid, animated=True, cmap=cmap)
     
     ims.append([im])
 

@@ -29,16 +29,16 @@ When the cell is off:
 '''
 
 #each cell emits this amplitude of stimulation
-AMPLITUDE = 1
+AMPLITUDE = 0.5
 
 #threshold level to reach for cell to be activated
 THRESHOLD = 1
 
 #refractory period after being activated in seconds
-REFRACTORY_PERIOD = 0.5
+REFRACTORY_PERIOD = 1
 
 #active cell time in seconds
-ACTIVE_TIME = 1
+ACTIVE_TIME = 50
 
 RADIUS = 3
 
@@ -145,41 +145,41 @@ def neighbour_ap(grid, i, j, radius):
     counter = 0
     for r in range(1,radius+1):   
         #print("radius", ((i-r)**2 + (j-r)**2)) 
-        #if ((r-i)**2 + (i-j)**2) <= radius**2:
+        if ((r)**2 + (r)**2) <= radius**2:
             
-        NW = get_cell(grid, i-r, j-r)
-        N = get_cell(grid, i-r, j)
-        NE = get_cell(grid, i-r, j+r)
-        W = get_cell(grid, i, j+r)
-        E = get_cell(grid, i, j-r)
-        SW = get_cell(grid, i+r, j-r)
-        S = get_cell(grid, i+r, j)
-        SE = get_cell(grid, i+r, j+r)
-        # NW = (grid[i-r][j-r])
-        # N = (grid[i-r][j])
-        # NE = (grid[i-r][j+r])
-        # W = (grid[i][j+r])
-        # E = (grid[i][j-r])
-        # SW = (grid[i+r][j-r])
-        # S = (grid[i+r][j])
-        # SE = (grid[i+r][j+r])
-        if NW == 1:
-            counter += AMPLITUDE
-        if N == 1:
-            counter += AMPLITUDE
-        if NE == 1:
-            counter += AMPLITUDE
-        if W == 1:
-            counter += AMPLITUDE
-        if E == 1:
-            counter += AMPLITUDE
-        if SW == 1:
-            counter += AMPLITUDE
-        if S == 1:
-            counter += AMPLITUDE
-        if SE == 1:
-            counter += AMPLITUDE
-        #print("counter",counter)
+            NW = get_cell(grid, i-r, j-r)
+            N = get_cell(grid, i-r, j)
+            NE = get_cell(grid, i-r, j+r)
+            W = get_cell(grid, i, j+r)
+            E = get_cell(grid, i, j-r)
+            SW = get_cell(grid, i+r, j-r)
+            S = get_cell(grid, i+r, j)
+            SE = get_cell(grid, i+r, j+r)
+            # NW = (grid[i-r][j-r])
+            # N = (grid[i-r][j])
+            # NE = (grid[i-r][j+r])
+            # W = (grid[i][j+r])
+            # E = (grid[i][j-r])
+            # SW = (grid[i+r][j-r])
+            # S = (grid[i+r][j])
+            # SE = (grid[i+r][j+r])
+            if NW == 1:
+                counter += AMPLITUDE
+            if N == 1:
+                counter += AMPLITUDE
+            if NE == 1:
+                counter += AMPLITUDE
+            if W == 1:
+                counter += AMPLITUDE
+            if E == 1:
+                counter += AMPLITUDE
+            if SW == 1:
+                counter += AMPLITUDE
+            if S == 1:
+                counter += AMPLITUDE
+            if SE == 1:
+                counter += AMPLITUDE
+            #print("counter",counter)
     return counter
 
 
@@ -196,7 +196,8 @@ SIZE = (50,50)
 #start time
 START_TIME = time.time()
 og_grid = np.zeros(SIZE)
-og_grid[0][0] = 1
+og_grid[25][25] = 1
+og_grid[25][24] = 1
 
 
 

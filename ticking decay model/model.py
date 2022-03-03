@@ -4,6 +4,7 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import copy
+import time
 
 """
 If enough cells in the neighbourhood are on:
@@ -17,7 +18,7 @@ Neighbourhood:
 """
 
 THRESHOLD = 3
-RADIUS = 5
+RADIUS = 21
 REFRACTORY = 10
 
 
@@ -76,6 +77,9 @@ def num_neighbours(grid, i, j, radius):
             #print("counter",counter)
     return counter
 
+def start_timer():
+    #in milliseconds
+    return round(time.time())
 
 def add_border(grid):
     x = np.pad(grid, pad_width=RADIUS, mode='constant', constant_values=10000)
@@ -90,7 +94,6 @@ def remove_border(grid):
     return grid
 
 def printProgressBar (iteration, total, length):
-
     percent = ("{0:.1f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = '█' * filledLength + '-' * (length - filledLength)
@@ -101,43 +104,57 @@ def printProgressBar (iteration, total, length):
     
 
 
-grid = np.zeros((50,50))
-grid[0][0] = 20
-grid[0][1] = 20
-grid[1][1] = 20
-grid [1][2] = 20
+grid = np.zeros((372,372))
+for i in range(16):
+    for j in range(16):
+        grid[i][j] = 20
 
-for i in range(10,21):
-    for j in range(10,16):
-        grid[i][j] = -1
+#defining electrically inactive points
+#mitral valve
+for i in range(len(grid)-1):
+    for j in range(len(grid)-1, len(grid)-135-1, -1):
+        grid[i][j] = 20
+
+#vein centres
+veins_x = [50, 100, len(grid)-100, len(grid)-50]
+veins_y = [100, 50, 100, 50]
+vein_radius = 50
+
+#the 4 veins
+for v in range(len(veins_x)):
+    for i in range(len(grid)):
+        for j in range(max(veins_y)):
+            if ((i-veins_x[v])**2+(j-veins_y[v])**2)**0.5 <= vein_radius:
+                grid[i][j] = 20
 
 
 
-#add padding
-grid = add_border(grid)
+# #add padding
+# grid = add_border(grid)
 
 
 #animate frame by frame
 fig, ax = plt.subplots()
 ims = []
-colors = ['k', 'r', 'y', 'w']
 
-ITERATIONS = 500
-printProgressBar(0, ITERATIONS, length = 50)
-for i in range(ITERATIONS):
-    if i == 0:
-        grid = remove_border(grid)
-        ax.imshow(grid, animated=True, cmap='Oranges', interpolation='nearest')
-    new = update(grid)
-    grid = new
+ITERATIONS = 100
+start_time = start_timer()
+ax.imshow(grid, animated=False, cmap='Oranges')
+# printProgressBar(0, ITERATIONS, length = 50)
+# for i in range(ITERATIONS):
+#     if i == 0:
+#         grid = remove_border(grid)
+#         ax.imshow(grid, animated=True, cmap='Oranges', interpolation='nearest')
+#     new = update(grid)
+#     grid = new
+#     im = ax.imshow(new, animated=True, cmap='Oranges', interpolation='nearest')
+#     ims.append([im])
+#     printProgressBar(i+1,ITERATIONS, length = 50)
+print("process took:", start_timer() - start_time, "s")
     
-    im = ax.imshow(new, animated=True, cmap='Oranges', interpolation='nearest')
-    ims.append([im])
-    printProgressBar(i+1,ITERATIONS, length = 50)
-    
 
 
-ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
-                                repeat_delay=1000)
+# ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
+#                                 repeat_delay=1000)
 plt.show()
 

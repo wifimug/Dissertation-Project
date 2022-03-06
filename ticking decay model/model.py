@@ -1,10 +1,10 @@
 from os import remove
 import numpy as np
-import argparse
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import copy
 import time
+import random
 
 """
 If enough cells in the neighbourhood are on:
@@ -18,7 +18,7 @@ Neighbourhood:
 """
 
 THRESHOLD = 3
-RADIUS = 21
+RADIUS = 5
 REFRACTORY = 10
 
 
@@ -46,9 +46,7 @@ def update(curr_grid):
 def num_neighbours(grid, i, j, radius):
     counter = 0
     for r in range(1,radius+1):   
-        #print("radius", ((i-r)**2 + (j-r)**2)) 
         if ((r)**2 + (r)**2) <= radius**2:
-            
             NW = grid[i-r][j-r]
             N = grid[i-r][j]
             NE = grid[i-r][j+r]
@@ -74,7 +72,6 @@ def num_neighbours(grid, i, j, radius):
                 counter += 1
             if SE == 1:
                 counter += 1
-            #print("counter",counter)
     return counter
 
 def start_timer():
@@ -82,7 +79,7 @@ def start_timer():
     return round(time.time())
 
 def add_border(grid):
-    x = np.pad(grid, pad_width=RADIUS, mode='constant', constant_values=10000)
+    x = np.pad(grid, pad_width=RADIUS, mode='constant', constant_values=-2)
     return x
 
 def remove_border(grid):
@@ -101,60 +98,66 @@ def printProgressBar (iteration, total, length):
     # Print New Line on Complete
     if iteration == total: 
         print()
-    
+
+def calc_time(start, end):
+    if end - start > 100:
+        print("process took:", (end - start)/60, "mins")
+    else:
+        print("process took:", end - start + "s")
+    return None
 
 
-grid = np.zeros((372,372))
-for i in range(16):
-    for j in range(16):
-        grid[i][j] = 20
+grid = np.zeros((200,200))
+for i in range(10):
+    for j in range(10):
+        rng = random.randint(0,1)
+        if rng == 1:
+            grid[i][j] = 20
 
-#defining electrically inactive points
-#mitral valve
+# defining electrically inactive points
+# mitral valve
 for i in range(len(grid)-1):
-    for j in range(len(grid)-1, len(grid)-135-1, -1):
-        grid[i][j] = 20
+    for j in range(len(grid)-1, len(grid)-82-1, -1):
+        grid[j][i] = -1
 
-#vein centres
-veins_x = [50, 100, len(grid)-100, len(grid)-50]
-veins_y = [100, 50, 100, 50]
-vein_radius = 50
+# vein centres
+veins_x = [20, 45, len(grid)-20, len(grid)-45]
+veins_y = [20, 45, 20, 45]
+vein_radius = 15
 
-#the 4 veins
+# the 4 veins
 for v in range(len(veins_x)):
     for i in range(len(grid)):
-        for j in range(max(veins_y)):
-            if ((i-veins_x[v])**2+(j-veins_y[v])**2)**0.5 <= vein_radius:
-                grid[i][j] = 20
-
-
-
-# #add padding
-# grid = add_border(grid)
+        for j in range(max(veins_y)*2):
+            if ((i-veins_x[v])**2+(j-veins_y[v])**2) <= vein_radius**2:
+                grid[j][i] = -1
 
 
 #animate frame by frame
 fig, ax = plt.subplots()
 ims = []
 
-ITERATIONS = 100
+ITERATIONS = 500
 start_time = start_timer()
 ax.imshow(grid, animated=False, cmap='Oranges')
-# printProgressBar(0, ITERATIONS, length = 50)
-# for i in range(ITERATIONS):
-#     if i == 0:
-#         grid = remove_border(grid)
-#         ax.imshow(grid, animated=True, cmap='Oranges', interpolation='nearest')
-#     new = update(grid)
-#     grid = new
-#     im = ax.imshow(new, animated=True, cmap='Oranges', interpolation='nearest')
-#     ims.append([im])
-#     printProgressBar(i+1,ITERATIONS, length = 50)
-print("process took:", start_timer() - start_time, "s")
+printProgressBar(0, ITERATIONS, length = 50)
+for i in range(ITERATIONS):
+    if i == 0:
+        grid = remove_border(grid)
+        ax.imshow(grid, animated=True, cmap='Oranges', interpolation='nearest')
+    new = update(grid)
+    grid = new
+    im = ax.imshow(new, animated=True, cmap='Oranges', interpolation='nearest')
+    ims.append([im])
+    printProgressBar(i+1,ITERATIONS, length = 50)
+calc_time(start_time, start_timer())
     
 
 
-# ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
-#                                 repeat_delay=1000)
+ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
+                                repeat_delay=10)
 plt.show()
+
+
+ani.save('animation.gif', writer='imagemagick', fps=60)
 

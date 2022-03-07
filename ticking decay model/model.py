@@ -103,8 +103,8 @@ def calc_time(start, end):
     if end - start > 100:
         print("process took:", (end - start)/60, "mins")
     else:
-        print("process took:", end - start + "s")
-    return None
+        print("process took:", end - start,"s")
+
 
 
 grid = np.zeros((200,200))
@@ -121,8 +121,8 @@ for i in range(len(grid)-1):
         grid[j][i] = -1
 
 # vein centres
-veins_x = [20, 45, len(grid)-20, len(grid)-45]
-veins_y = [20, 45, 20, 45]
+veins_x = [25, 50, len(grid)-25, len(grid)-50]
+veins_y = [25, 50, 25, 50]
 vein_radius = 15
 
 # the 4 veins

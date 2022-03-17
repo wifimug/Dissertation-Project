@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -6,33 +5,27 @@ import copy
 import time
 import random
 
-"""
-If enough cells in the neighbourhood are on:
-- current cell is stimulated, value set to 20
-- cell value will tick down each generation
-- cannot be stimulated again until resting value
-
-Neighbourhood:
-- a circular neighbourhood 
-
-"""
+'''
+Precompute the neighbourhood cells
+- 1 array for x coords of neighbours
+- 1 array for y coords of neighbours
+> neighbourhood adjustable based on radius set
+'''
 
 THRESHOLD = 3
 RADIUS = 5
 REFRACTORY = 10
 
 
-
-
 #for one cell, c, find it's neighbours
-def update(curr_grid):
-    curr_grid = add_border(curr_grid)
+def update(curr_grid, x_arr, y_arr):
+    #curr_grid = add_border(curr_grid)
     new_grid = copy.deepcopy(curr_grid)
     active = 0
     # print(curr_grid[10][10])
-    for i in range(len(curr_grid)-RADIUS):
-        for j in range(len(curr_grid[0])-RADIUS):
-            n = num_neighbours(curr_grid, i, j, RADIUS)
+    for i in range(len(curr_grid)):
+        for j in range(len(curr_grid[0])):
+            n = get_neighbours(curr_grid, x_arr, y_arr, i, j, RADIUS)
             #when current cell is ON
             if curr_grid[i][j] > 0:
                 new_grid[i][j] -= 1
@@ -41,59 +34,64 @@ def update(curr_grid):
             if curr_grid[i][j] == 0 and n >= THRESHOLD:
                 new_grid[i][j] = REFRACTORY
                 active += 1
-    new_grid = remove_border(new_grid)
+    #new_grid = remove_border(new_grid)
 
     return new_grid, active
 
 
+def get_neighbours_array(init_grid, radius):
+    x_arr = []
+    y_arr = []
+    for i in range(len(init_grid)):
+        for j in range(len(init_grid)):
+            for r in range(1, radius+1):
+                if ((r)**2 + (r)**2) <= radius**2:
+                    x = i + r
+                    xx = i - r
+                    y = j + r
+                    yy = j - r
+                    if x < len(init_grid):
+                        x_arr.append(x)
+                    else:
+                        x_arr.append(-1)
+                    if xx > 0:
+                        x_arr.append(xx)
+                    else:
+                        x_arr.append(-1)
+                    if y < len(init_grid):
+                        y_arr.append(y)
+                    else:
+                        y_arr.append(-1)
+                    if yy > 0:
+                        y_arr.append(yy)
+                    else:
+                        y_arr.append(-1)
 
 
-def num_neighbours(grid, i, j, radius):
-    counter = 0
-    for r in range(1,radius+1):
-        if ((r)**2 + (r)**2) <= radius**2:
-            NW = grid[i-r][j-r]
-            N = grid[i-r][j]
-            NE = grid[i-r][j+r]
-            W = grid[i][j+r]
-            E = grid[i][j-r]
-            SW = grid[i+r][j-r]
-            S = grid[i+r][j]
-            SE = grid[i+r][j+r]
+    return x_arr, y_arr
 
-            if NW == 1:
-                counter += 1
-            if N == 1:
-                counter += 1
-            if NE == 1:
-                counter += 1
-            if W == 1:
-                counter += 1
-            if E == 1:
-                counter += 1
-            if SW == 1:
-                counter += 1
-            if S == 1:
-                counter += 1
-            if SE == 1:
-                counter += 1
-    return counter
+def get_neighbours(grid, x_arr, y_arr, i, j, radius):
+    n = 0
+    x = x_arr[i+j:i+j+radius+1]
+    y = y_arr[i+j:i+j+radius+1]
+    for r in range(radius):
+        if x[r] != -1 and y[r] != -1:
+            neighbour = grid[x[r]][y[r]]
+            #print("x:", x[r], "y:", y[r])
+            if neighbour > 0:
+                n += 1
+    return n
+
 
 def start_timer():
     #in milliseconds
     return round(time.time())
 
-def add_border(grid):
-    x = np.pad(grid, pad_width=RADIUS, mode='constant', constant_values=-2)
-    return x
-
-def remove_border(grid):
-    for i in range(RADIUS):
-        grid = np.delete(grid, len(grid)-1, 1)
-        grid = np.delete(grid, len(grid)-1, 0)
-        grid = np.delete(grid, 0, 1)
-        grid = np.delete(grid, 0, 0)
-    return grid
+def calc_time(start, end):
+    if end - start > 100:
+        print("process took:", (end - start)/60, "mins")
+    else:
+        print("process took:", end - start,"s")
 
 def printProgressBar (iteration, total, length):
     percent = ("{0:.1f}").format(100 * (iteration / float(total)))
@@ -104,14 +102,7 @@ def printProgressBar (iteration, total, length):
     if iteration == total: 
         print()
 
-def calc_time(start, end):
-    if end - start > 100:
-        print("process took:", (end - start)/60, "mins")
-    else:
-        print("process took:", end - start,"s")
-
-
-
+    
 grid = np.zeros((200,200))
 active = 0
 for i in range(10):
@@ -144,27 +135,29 @@ for v in range(len(veins_x)):
 fig, ax = plt.subplots()
 ims = []
 
-
 ITERATIONS = 500
 
 
 active_cells = np.zeros(ITERATIONS)
 
+x_arr, y_arr = get_neighbours_array(grid, RADIUS)
+
+print("x_arr length:", len(x_arr))
+
+ax.imshow(grid, animated=False)
+
 start_time = start_timer()
-ax.imshow(grid, animated=False, cmap='Oranges')
 printProgressBar(0, ITERATIONS, length = 50)
 for i in range(ITERATIONS):
     if i == 0:
-        grid = remove_border(grid)
-        ax.imshow(grid, animated=True, cmap='Oranges', interpolation='nearest')
-    new, active = update(grid)
+        ax.imshow(grid, animated=True, interpolation='nearest')
+    new, active = update(grid, x_arr, y_arr)
     grid = new
     active_cells[i] = active
-    im = ax.imshow(new, animated=True, cmap='Oranges', interpolation='nearest')
+    im = ax.imshow(new, animated=True, interpolation='nearest')
     ims.append([im])
     printProgressBar(i+1,ITERATIONS, length = 50)
 calc_time(start_time, start_timer())
-    
 
 
 ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
@@ -173,7 +166,3 @@ plt.show()
 
 plt.plot(active_cells)
 plt.show()
-
-
-#ani.save('animation.gif', writer='imagemagick', fps=60)
-

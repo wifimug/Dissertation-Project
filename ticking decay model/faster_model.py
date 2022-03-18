@@ -12,20 +12,25 @@ Precompute the neighbourhood cells
 > neighbourhood adjustable based on radius set
 '''
 
-THRESHOLD = 3
+THRESHOLD = 1
 RADIUS = 5
-REFRACTORY = 10
+REFRACTORY = 20
 
 
-#for one cell, c, find it's neighbours
+
 def update(curr_grid, x_arr, y_arr):
-    #curr_grid = add_border(curr_grid)
+    """
+    Updates the state of the current grid given
+    the x and y coordinates of the neighbours
+
+    return: state of the new grid
+    """
     new_grid = copy.deepcopy(curr_grid)
     active = 0
-    # print(curr_grid[10][10])
     for i in range(len(curr_grid)):
         for j in range(len(curr_grid[0])):
             n = get_neighbours(curr_grid, x_arr, y_arr, i, j, RADIUS)
+
             #when current cell is ON
             if curr_grid[i][j] > 0:
                 new_grid[i][j] -= 1
@@ -34,71 +39,149 @@ def update(curr_grid, x_arr, y_arr):
             if curr_grid[i][j] == 0 and n >= THRESHOLD:
                 new_grid[i][j] = REFRACTORY
                 active += 1
-    #new_grid = remove_border(new_grid)
 
     return new_grid, active
 
 
+
 def get_neighbours_array(init_grid, radius):
+    """
+    Takes in the init_grid and radius of
+    neighbourhood and outputs the x and y coordinates
+    of the neighbours for each cell in the init_grid
+
+    return: x and y coordinates as 2 arrays
+    """
     x_arr = []
     y_arr = []
-    for i in range(len(init_grid)):
-        for j in range(len(init_grid)):
-            for r in range(1, radius+1):
+    length = len(init_grid)
+    for i in range(length):
+        for j in range(length):
+            for r in range(radius+1):
                 if ((r)**2 + (r)**2) <= radius**2:
                     x = i + r
                     xx = i - r
                     y = j + r
                     yy = j - r
-                    if x < len(init_grid):
+
+                    if x < length and y < length:
                         x_arr.append(x)
-                    else:
-                        x_arr.append(-1)
-                    if xx > 0:
-                        x_arr.append(xx)
-                    else:
-                        x_arr.append(-1)
-                    if y < len(init_grid):
                         y_arr.append(y)
                     else:
+                        x_arr.append(-1)
                         y_arr.append(-1)
-                    if yy > 0:
+                    
+                    if x < length and yy >= 0:
+                        x_arr.append(x)
                         y_arr.append(yy)
                     else:
+                        x_arr.append(-1)
                         y_arr.append(-1)
 
+                    if xx >= 0 and y < length:
+                        x_arr.append(xx)
+                        y_arr.append(y)
+                    else:
+                        x_arr.append(-1)
+                        y_arr.append(-1)
+                    
+                    if xx >= 0 and yy >= 0:
+                        x_arr.append(xx)
+                        y_arr.append(yy)
+                    else:
+                        x_arr.append(-1)
+                        y_arr.append(-1)
 
+                    if x < length:
+                        x_arr.append(x)
+                        y_arr.append(j)
+                    else:
+                        x_arr.append(-1)
+                        y_arr.append(-1)
+
+                    if y < length:
+                        x_arr.append(i)
+                        y_arr.append(y)
+                    else:
+                        x_arr.append(-1)
+                        y_arr.append(-1)
+
+                    if xx >= 0:
+                        x_arr.append(xx)
+                        y_arr.append(j)
+                    else:
+                        x_arr.append(-1)
+                        y_arr.append(-1)
+
+                    if yy >= 0:
+                        x_arr.append(i)
+                        y_arr.append(yy)
+                    else:
+                        x_arr.append(-1)
+                        y_arr.append(-1)
+              
+
+
+
+
+
+                    
+
+                
     return x_arr, y_arr
 
+
 def get_neighbours(grid, x_arr, y_arr, i, j, radius):
+    """
+    For a cell (i,j) in the grid, get the number of active 
+    neighbours.
+
+    return: number of active neighbours
+    """
     n = 0
-    x = x_arr[i+j:i+j+radius+1]
-    y = y_arr[i+j:i+j+radius+1]
-    for r in range(radius):
-        if x[r] != -1 and y[r] != -1:
-            neighbour = grid[x[r]][y[r]]
-            #print("x:", x[r], "y:", y[r])
-            if neighbour > 0:
+    step = radius * 8
+    index = (i+j) * step
+    x = x_arr[index : index + step]
+    y = y_arr[index : index + step]
+    # if i == 0 and j == 0:
+    #     print("x:", x, "y:", y)
+
+    for s in range(len(x)):
+        if x[s] != -1 and y[s] != -1:
+            if grid[x[s]][y[s]] > 0:
                 n += 1
     return n
 
 
 def start_timer():
-    #in milliseconds
+    """
+    Gets a time in seconds
+    
+    return: unix time in seconds
+    """
     return round(time.time())
 
+
+
 def calc_time(start, end):
+    """
+    Calculates the time elapsed from start time to
+    end time. Prints the time elapsed in seconds if 
+    time elapsed is less than 100 seconds, else
+    prints in minutes.
+    """
     if end - start > 100:
         print("process took:", (end - start)/60, "mins")
     else:
         print("process took:", end - start,"s")
+
+
 
 def printProgressBar (iteration, total, length):
     percent = ("{0:.1f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = '█' * filledLength + '-' * (length - filledLength)
     print(f'\rProgress: |{bar}| {percent}% Complete', end = "\r")
-    # Print New Line on Complete
     if iteration == total: 
         print()
 
@@ -135,7 +218,7 @@ for v in range(len(veins_x)):
 fig, ax = plt.subplots()
 ims = []
 
-ITERATIONS = 500
+ITERATIONS = 100
 
 
 active_cells = np.zeros(ITERATIONS)

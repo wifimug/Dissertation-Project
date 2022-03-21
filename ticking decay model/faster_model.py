@@ -119,15 +119,7 @@ def get_neighbours_array(init_grid, radius):
                     else:
                         x_arr.append(-1)
                         y_arr.append(-1)
-              
-
-
-
-
-
-                    
-
-                
+                           
     return x_arr, y_arr
 
 

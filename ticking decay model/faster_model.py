@@ -12,8 +12,8 @@ Precompute the neighbourhood cells
 > neighbourhood adjustable based on radius set
 '''
 
-THRESHOLD = 1
-RADIUS = 3
+THRESHOLD = 3
+RADIUS = 10
 REFRACTORY = 20
 
 
@@ -31,6 +31,7 @@ def update(curr_grid, x_arr, y_arr):
     for i in range(len(curr_grid)):
         for j in range(len(curr_grid[0])):
             n = get_neighbours(curr_grid, x_arr, y_arr, step, RADIUS)
+            # print(n)
             step += 1
 
             #when current cell is ON
@@ -61,32 +62,75 @@ def get_neighbours_array(init_grid, radius):
     for i in range(length):
         for j in range(length):
             for r in range(1, radius+1):
-                if ((r)**2 + (r)**2) <= radius**2:
-                    x = i + r
-                    xx = i - r
-                    if x < len(init_grid):
-                        x_arr.append(x)
-                    else:
-                        x_arr.append(-1)
-                    if xx >= 0:
-                        x_arr.append(xx)
-                    else:
-                        x_arr.append(-1)
-                
-            
-            for r in range(1, radius+1):
-                if ((r)**2 + (r)**2) <= radius**2:
-                    y = j + r
-                    yy = j - r
-                    if y < len(init_grid):
-                        y_arr.append(y)
-                    else:
-                        y_arr.append(-1)
-                    if yy >= 0:
-                        y_arr.append(yy)
-                    else:
-                        y_arr.append(-1)
-    print(x_arr[len(x_arr)-100:])
+                x = i + r
+                xx = i - r
+                y = j + r
+                yy = j - r
+
+                if x < length and y < length:
+                    x_arr.append(x)
+                    y_arr.append(y)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+
+                if x < length and yy >= 0:
+                    x_arr.append(x)
+                    y_arr.append(yy)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+
+                if xx >= 0 and y < length:
+                    x_arr.append(xx)
+                    y_arr.append(y)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+
+                if xx >= 0 and yy >= 0:
+                    x_arr.append(xx)
+                    y_arr.append(yy)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+                if x < length:
+                    x_arr.append(x)
+                    y_arr.append(j)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+                if y < length:
+                    x_arr.append(i)
+                    y_arr.append(y)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+                if xx >= 0:
+                    x_arr.append(xx)
+                    y_arr.append(j)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+
+                if yy >= 0:
+                    x_arr.append(i)
+                    y_arr.append(yy)
+                else:
+                    x_arr.append(-1)
+                    y_arr.append(-1)
+
+
+
+    print(x_arr[:100])
+    print(y_arr[:100])
     return x_arr, y_arr
 
 
@@ -98,20 +142,26 @@ def get_neighbours(grid, x_arr, y_arr, s, radius):
     return: number of active neighbours
     """
     n = 0
-    step = radius * 2
-    #print(step)
+    # step = int(3.14 * radius ** 2)
+    step = radius * 8
     index = s * step
     x = x_arr[index : index + step]
     y = y_arr[index : index + step]
+    # print(len(x))
     # if i == 0 and j == 0:
     #     print("x:", x, "y:", y)
-    # if s < 5:
-    #     print("x:", x, "y:", y)
+    # if s == 239999:
+    #     print("s", s,"x:", x, "y:", y)
 
     for i in range(len(x)):
         if x[i] != -1 and y[i] != -1:
-            if grid[x[i]][y[i]] > 0:
+            if grid[y[i]][x[i]] > 0:
+                # if x[i] > 150 or y[i] > 150:
+                #     print("big:",grid[x[i]][y[i]])
                 n += 1
+    # indices = [list(a) for a in  zip(x,y)]
+    # total = grid[indices].sum()
+    # n = total // THRESHOLD
     return n
 
 
@@ -156,6 +206,7 @@ for i in range(10):
         if rng == 1:
             grid[i][j] = 20
             active += 1
+# grid[0][0] = 20
 
 # defining electrically inactive points
 # mitral valve
@@ -180,7 +231,7 @@ for v in range(len(veins_x)):
 fig, ax = plt.subplots()
 ims = []
 
-ITERATIONS = 100
+ITERATIONS = 500
 
 
 active_cells = np.zeros(ITERATIONS)
@@ -207,7 +258,9 @@ calc_time(start_time, start_timer())
 #write data to file
 with open("data.txt", "w") as f:
     for im in ims:
-        f.write("%s/n" % i)
+        f.write("%s" % i)
+with open("graph.txt", "w") as f:
+    f.write("active cells over iterations", active)
 
 ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                 repeat_delay=10)

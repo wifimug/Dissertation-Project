@@ -16,5 +16,12 @@ Using the settings:
 Radius = 10, Threshold = 3, Refractory = 20
 Iterations = 500
 
-Faster model takes 5.5 mins to finish.
+Faster model takes 13.6 mins to finish.
 Previous model takes 17 mins to finish. (and it doesn't work)
+
+
+Using the settings:
+Radius = 5, Threshold = 2, Refractory = 20
+Iterations = 500
+
+Faster model takes 7.6 mins to finish

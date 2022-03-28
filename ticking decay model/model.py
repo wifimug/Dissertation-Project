@@ -18,7 +18,7 @@ Neighbourhood:
 """
 
 THRESHOLD = 3
-RADIUS = 10
+RADIUS = 3
 REFRACTORY = 20
 
 

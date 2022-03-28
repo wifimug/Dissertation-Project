@@ -13,7 +13,7 @@ Precompute the neighbourhood cells
 '''
 
 THRESHOLD = 1
-RADIUS = 5
+RADIUS = 3
 REFRACTORY = 20
 
 
@@ -26,10 +26,12 @@ def update(curr_grid, x_arr, y_arr):
     return: state of the new grid
     """
     new_grid = copy.deepcopy(curr_grid)
+    step = 0
     active = 0
     for i in range(len(curr_grid)):
         for j in range(len(curr_grid[0])):
-            n = get_neighbours(curr_grid, x_arr, y_arr, i, j, RADIUS)
+            n = get_neighbours(curr_grid, x_arr, y_arr, step, RADIUS)
+            step += 1
 
             #when current cell is ON
             if curr_grid[i][j] > 0:
@@ -39,7 +41,8 @@ def update(curr_grid, x_arr, y_arr):
             if curr_grid[i][j] == 0 and n >= THRESHOLD:
                 new_grid[i][j] = REFRACTORY
                 active += 1
-
+            # if i == len(curr_grid)-1 and j == len(curr_grid[0])-1:
+            #     print(step)
     return new_grid, active
 
 
@@ -57,73 +60,37 @@ def get_neighbours_array(init_grid, radius):
     length = len(init_grid)
     for i in range(length):
         for j in range(length):
-            for r in range(radius+1):
+            for r in range(1, radius+1):
                 if ((r)**2 + (r)**2) <= radius**2:
                     x = i + r
                     xx = i - r
-                    y = j + r
-                    yy = j - r
-
-                    if x < length and y < length:
+                    if x < len(init_grid):
                         x_arr.append(x)
-                        y_arr.append(y)
                     else:
                         x_arr.append(-1)
-                        y_arr.append(-1)
-                    
-                    if x < length and yy >= 0:
-                        x_arr.append(x)
-                        y_arr.append(yy)
-                    else:
-                        x_arr.append(-1)
-                        y_arr.append(-1)
-
-                    if xx >= 0 and y < length:
-                        x_arr.append(xx)
-                        y_arr.append(y)
-                    else:
-                        x_arr.append(-1)
-                        y_arr.append(-1)
-                    
-                    if xx >= 0 and yy >= 0:
-                        x_arr.append(xx)
-                        y_arr.append(yy)
-                    else:
-                        x_arr.append(-1)
-                        y_arr.append(-1)
-
-                    if x < length:
-                        x_arr.append(x)
-                        y_arr.append(j)
-                    else:
-                        x_arr.append(-1)
-                        y_arr.append(-1)
-
-                    if y < length:
-                        x_arr.append(i)
-                        y_arr.append(y)
-                    else:
-                        x_arr.append(-1)
-                        y_arr.append(-1)
-
                     if xx >= 0:
                         x_arr.append(xx)
-                        y_arr.append(j)
                     else:
                         x_arr.append(-1)
+                
+            
+            for r in range(1, radius+1):
+                if ((r)**2 + (r)**2) <= radius**2:
+                    y = j + r
+                    yy = j - r
+                    if y < len(init_grid):
+                        y_arr.append(y)
+                    else:
                         y_arr.append(-1)
-
                     if yy >= 0:
-                        x_arr.append(i)
                         y_arr.append(yy)
                     else:
-                        x_arr.append(-1)
                         y_arr.append(-1)
-                           
+    print(x_arr[len(x_arr)-100:])
     return x_arr, y_arr
 
 
-def get_neighbours(grid, x_arr, y_arr, i, j, radius):
+def get_neighbours(grid, x_arr, y_arr, s, radius):
     """
     For a cell (i,j) in the grid, get the number of active 
     neighbours.
@@ -131,16 +98,19 @@ def get_neighbours(grid, x_arr, y_arr, i, j, radius):
     return: number of active neighbours
     """
     n = 0
-    step = radius * 8
-    index = (i+j) * step
+    step = radius * 2
+    #print(step)
+    index = s * step
     x = x_arr[index : index + step]
     y = y_arr[index : index + step]
     # if i == 0 and j == 0:
     #     print("x:", x, "y:", y)
+    # if s < 5:
+    #     print("x:", x, "y:", y)
 
-    for s in range(len(x)):
-        if x[s] != -1 and y[s] != -1:
-            if grid[x[s]][y[s]] > 0:
+    for i in range(len(x)):
+        if x[i] != -1 and y[i] != -1:
+            if grid[x[i]][y[i]] > 0:
                 n += 1
     return n
 
@@ -234,6 +204,10 @@ for i in range(ITERATIONS):
     printProgressBar(i+1,ITERATIONS, length = 50)
 calc_time(start_time, start_timer())
 
+#write data to file
+with open("data.txt", "w") as f:
+    for im in ims:
+        f.write("%s/n" % i)
 
 ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                 repeat_delay=10)

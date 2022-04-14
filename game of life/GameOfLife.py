@@ -76,13 +76,14 @@ grid = add_border(grid)
 #animate frame by frame
 fig, ax = plt.subplots()
 ims = []
+ax.axis(False)
 
-for i in range(40):
+for i in range(500):
     if i == 0:
-        ax.imshow(grid)
+        ax.imshow(grid, cmap="gist_gray")
     new = update(grid)
     grid = new
-    im = ax.imshow(new, animated=True)
+    im = ax.imshow(new, cmap="gist_gray", animated=True)
     
     ims.append([im])
 

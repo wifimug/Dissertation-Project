@@ -12,8 +12,8 @@ Precompute the neighbourhood cells
 > neighbourhood adjustable based on radius set
 '''
 
-THRESHOLD = 3
-RADIUS = 10
+THRESHOLD = 5
+RADIUS = 5
 REFRACTORY = 20
 
 
@@ -30,8 +30,10 @@ def update(curr_grid, x_arr, y_arr):
     active = 0
     for i in range(len(curr_grid)):
         for j in range(len(curr_grid[0])):
-            n = get_neighbours(curr_grid, x_arr, y_arr, step, RADIUS)
+            n = get_neighbours(curr_grid, x_arr, y_arr, step)
             # print(n)
+            # [ 0 0 0 0 0 0 ]
+            # [ 0 0 0 0 0 0 ]
             step += 1
 
             #when current cell is ON
@@ -48,6 +50,7 @@ def update(curr_grid, x_arr, y_arr):
 
 
 
+
 def get_neighbours_array(init_grid, radius):
     """
     Takes in the init_grid and radius of
@@ -58,83 +61,31 @@ def get_neighbours_array(init_grid, radius):
     """
     x_arr = []
     y_arr = []
-    length = len(init_grid)
-    for i in range(length):
-        for j in range(length):
-            for r in range(1, radius+1):
-                x = i + r
-                xx = i - r
-                y = j + r
-                yy = j - r
+    for i in range(len(init_grid)):
+        for j in range(len(init_grid[0])):
+            x_temp, y_temp = points_in_circle(radius, i, j, 0, len(init_grid))
 
-                if x < length and y < length:
-                    x_arr.append(x)
-                    y_arr.append(y)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
+            x_arr.append(x_temp)
+            y_arr.append(y_temp)
 
-
-                if x < length and yy >= 0:
-                    x_arr.append(x)
-                    y_arr.append(yy)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-
-                if xx >= 0 and y < length:
-                    x_arr.append(xx)
-                    y_arr.append(y)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-
-                if xx >= 0 and yy >= 0:
-                    x_arr.append(xx)
-                    y_arr.append(yy)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-                if x < length:
-                    x_arr.append(x)
-                    y_arr.append(j)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-                if y < length:
-                    x_arr.append(i)
-                    y_arr.append(y)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-                if xx >= 0:
-                    x_arr.append(xx)
-                    y_arr.append(j)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-
-                if yy >= 0:
-                    x_arr.append(i)
-                    y_arr.append(yy)
-                else:
-                    x_arr.append(-1)
-                    y_arr.append(-1)
-
-
-
-    print(x_arr[:100])
-    print(y_arr[:100])
+    #print(x_arr[:100])
+    #print(y_arr[:100])
     return x_arr, y_arr
 
+def points_in_circle(radius, x0, y0, lb, ub):
+    x_arr = []
+    y_arr = []
+    x_ = np.arange(x0 - radius - 1, x0 + radius + 1, dtype=int)
+    y_ = np.arange(y0 - radius - 1, y0 + radius + 1, dtype=int)
+    x, y = np.where((x_[:,np.newaxis] - x0)**2 + (y_ - y0)**2 <= radius**2)
+    for x, y in zip(x_[x], y_[y]):
+        if x < ub and x > lb and y < ub and y > lb:
+            if not (x == x0 and y == y0):
+                x_arr.append(x)
+                y_arr.append(y)
+    return x_arr, y_arr
 
-def get_neighbours(grid, x_arr, y_arr, s, radius):
+def get_neighbours(grid, x_arr, y_arr, s):
     """
     For a cell (i,j) in the grid, get the number of active 
     neighbours.
@@ -142,26 +93,12 @@ def get_neighbours(grid, x_arr, y_arr, s, radius):
     return: number of active neighbours
     """
     n = 0
-    # step = int(3.14 * radius ** 2)
-    step = radius * 8
-    index = s * step
-    x = x_arr[index : index + step]
-    y = y_arr[index : index + step]
-    # print(len(x))
-    # if i == 0 and j == 0:
-    #     print("x:", x, "y:", y)
-    # if s == 239999:
-    #     print("s", s,"x:", x, "y:", y)
+    x = x_arr[s]
+    y = y_arr[s]
 
     for i in range(len(x)):
-        if x[i] != -1 and y[i] != -1:
-            if grid[y[i]][x[i]] > 0:
-                # if x[i] > 150 or y[i] > 150:
-                #     print("big:",grid[x[i]][y[i]])
-                n += 1
-    # indices = [list(a) for a in  zip(x,y)]
-    # total = grid[indices].sum()
-    # n = total // THRESHOLD
+        if grid[y[i]][x[i]] > 0:
+            n += 1
     return n
 
 
@@ -210,21 +147,21 @@ for i in range(10):
 
 # defining electrically inactive points
 # mitral valve
-for i in range(len(grid)-1):
-    for j in range(len(grid)-1, len(grid)-82-1, -1):
-        grid[j][i] = -1
+# for i in range(len(grid)-1):
+#     for j in range(len(grid)-1, len(grid)-82-1, -1):
+#         grid[j][i] = -1
 
 # vein centres
-veins_x = [25, 50, len(grid)-25, len(grid)-50]
+veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
 veins_y = [25, 50, 25, 50]
 vein_radius = 15
 
 # the 4 veins
 for v in range(len(veins_x)):
-    for i in range(len(grid)):
-        for j in range(max(veins_y)*2):
-            if ((i-veins_x[v])**2+(j-veins_y[v])**2) <= vein_radius**2:
-                grid[j][i] = -1
+    for i in range(max(veins_y) + vein_radius):
+        for j in range(max(veins_x) + vein_radius):
+            if ((j-veins_x[v])**2+(i-veins_y[v])**2) <= vein_radius**2:
+                grid[i][j] = -1
 
 
 #animate frame by frame
@@ -260,7 +197,7 @@ with open("data.txt", "w") as f:
     for im in ims:
         f.write("%s" % i)
 with open("graph.txt", "w") as f:
-    f.write("active cells over iterations", active)
+    f.write("active cells over iterations %s" % active)
 
 ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                 repeat_delay=10)
@@ -268,3 +205,4 @@ plt.show()
 
 plt.plot(active_cells)
 plt.show()
+

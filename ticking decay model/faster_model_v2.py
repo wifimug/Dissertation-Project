@@ -9,6 +9,9 @@ import random
 Precompute the neighbourhood cells
 - 1 array for x coords of neighbours
 - 1 array for y coords of neighbours
+- 1 array of total active neighbour states for each cell
+> active neighbour states changed each iteration instead
+  of calculating number of active neighbours each iteration
 > neighbourhood adjustable based on radius set
 '''
 
@@ -68,7 +71,7 @@ def get_neighbours_array(init_grid, radius):
     y_arr = []
     for i in range(len(init_grid)):
         for j in range(len(init_grid[0])):
-            x_temp, y_temp = points_in_circle(radius, i, j, 0, len(init_grid))
+            x_temp, y_temp = points_in_circle(radius, i, j, len(init_grid[0]), len(init_grid))
 
             x_arr.append(x_temp)
             y_arr.append(y_temp)
@@ -78,18 +81,29 @@ def get_neighbours_array(init_grid, radius):
     return x_arr, y_arr
 
 
-def points_in_circle(radius, x0, y0, lb, ub):
+def points_in_circle(radius, x0, y0, xub, yub):
+    """
+    Takes the centre of the circle and the upper-bound
+    limits of the display grid and calculates all the 
+    points in the circle excluding the centres and points 
+    not on the display grid
+
+    return: array of x coordinates and array of y coordinates
+            of points for a given centre
+    """
     x_arr = []
     y_arr = []
     x_ = np.arange(x0 - radius - 1, x0 + radius + 1, dtype=int)
     y_ = np.arange(y0 - radius - 1, y0 + radius + 1, dtype=int)
     x, y = np.where((x_[:,np.newaxis] - x0)**2 + (y_ - y0)**2 <= radius**2)
     for x, y in zip(x_[x], y_[y]):
-        if x < ub and x > lb and y < ub and y > lb:
+        if (x < xub and x >= 0) and (y < yub and y >= 0):
             if not (x == x0 and y == y0):
                 x_arr.append(x)
                 y_arr.append(y)
     return x_arr, y_arr
+
+
 
 
 
@@ -127,9 +141,10 @@ def printProgressBar (iteration, total, length):
 
 
     
-grid = np.zeros((200,200))
+grid = np.zeros((200-82,200))
 x_arr, y_arr = get_neighbours_array(grid, RADIUS)
-active_neighbours_grid = np.zeros((200,200))
+print(x_arr[0], y_arr[0])
+active_neighbours_grid = np.zeros((200-82,200))
 
 active = 0
 for i in range(10):
@@ -156,7 +171,7 @@ for i in range(10):
 #mitral valve
 # for i in range(len(grid)-1):
 #     for j in range(len(grid)-1, len(grid)-82-1, -1):
-#         grid[j][i] = -1
+#         grid[j][i] = -2
 
 # vein centres
 veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
@@ -179,13 +194,10 @@ ITERATIONS = 500
 
 
 active_cells = np.zeros(ITERATIONS)
-print(active_neighbours_grid[:10][:10])
-
 
 
 print("x_arr length:", len(x_arr))
 
-ax.imshow(grid, animated=False)
 
 start_time = start_timer()
 printProgressBar(0, ITERATIONS, length = 50)

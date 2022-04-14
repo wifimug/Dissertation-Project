@@ -9,16 +9,19 @@ import random
 Precompute the neighbourhood cells
 - 1 array for x coords of neighbours
 - 1 array for y coords of neighbours
+- 1 array of total active neighbour states for each cell
+> active neighbour states changed each iteration instead
+  of calculating number of active neighbours each iteration
 > neighbourhood adjustable based on radius set
 '''
 
-THRESHOLD = 5
+THRESHOLD = 10
 RADIUS = 5
-REFRACTORY = 20
+REFRACTORY = 40
 
 
 
-def update(curr_grid, x_arr, y_arr):
+def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
     """
     Updates the state of the current grid given
     the x and y coordinates of the neighbours
@@ -30,22 +33,27 @@ def update(curr_grid, x_arr, y_arr):
     active = 0
     for i in range(len(curr_grid)):
         for j in range(len(curr_grid[0])):
-            n = get_neighbours(curr_grid, x_arr, y_arr, step)
-            # print(n)
-            # [ 0 0 0 0 0 0 ]
-            # [ 0 0 0 0 0 0 ]
-            step += 1
+            #when current cell is OFF
+            if curr_grid[i][j] == 0 and active_neighbours_grid[i][j] >= THRESHOLD:
+                new_grid[i][j] = REFRACTORY
+                active += 1
+                x = x_arr[step]
+                y = y_arr[step]
+                for k in range(len(x)):
+                    active_neighbours_grid[y[k]][x[k]] += 1
 
             #when current cell is ON
             if curr_grid[i][j] > 0:
                 new_grid[i][j] -= 1
+                if curr_grid[i][j] == 0:
+                    x = x_arr[step]
+                    y = y_arr[step]
+                    for k in range(len(x)):
+                        if active_neighbours_grid > 0:
+                            active_neighbours_grid[y[k]][x[k]] -= 1
                     
-            #when current cell is OFF
-            if curr_grid[i][j] == 0 and n >= THRESHOLD:
-                new_grid[i][j] = REFRACTORY
-                active += 1
-            # if i == len(curr_grid)-1 and j == len(curr_grid[0])-1:
-            #     print(step)
+            
+            step += 1
     return new_grid, active
 
 
@@ -63,7 +71,7 @@ def get_neighbours_array(init_grid, radius):
     y_arr = []
     for i in range(len(init_grid)):
         for j in range(len(init_grid[0])):
-            x_temp, y_temp = points_in_circle(radius, i, j, 0, len(init_grid))
+            x_temp, y_temp = points_in_circle(radius, i, j, len(init_grid[0]), len(init_grid))
 
             x_arr.append(x_temp)
             y_arr.append(y_temp)
@@ -72,34 +80,31 @@ def get_neighbours_array(init_grid, radius):
     #print(y_arr[:100])
     return x_arr, y_arr
 
-def points_in_circle(radius, x0, y0, lb, ub):
+
+def points_in_circle(radius, x0, y0, xub, yub):
+    """
+    Takes the centre of the circle and the upper-bound
+    limits of the display grid and calculates all the 
+    points in the circle excluding the centres and points 
+    not on the display grid
+
+    return: array of x coordinates and array of y coordinates
+            of points for a given centre
+    """
     x_arr = []
     y_arr = []
     x_ = np.arange(x0 - radius - 1, x0 + radius + 1, dtype=int)
     y_ = np.arange(y0 - radius - 1, y0 + radius + 1, dtype=int)
     x, y = np.where((x_[:,np.newaxis] - x0)**2 + (y_ - y0)**2 <= radius**2)
     for x, y in zip(x_[x], y_[y]):
-        if x < ub and x > lb and y < ub and y > lb:
+        if (x < xub and x >= 0) and (y < yub and y >= 0):
             if not (x == x0 and y == y0):
                 x_arr.append(x)
                 y_arr.append(y)
     return x_arr, y_arr
 
-def get_neighbours(grid, x_arr, y_arr, s):
-    """
-    For a cell (i,j) in the grid, get the number of active 
-    neighbours.
 
-    return: number of active neighbours
-    """
-    n = 0
-    x = x_arr[s]
-    y = y_arr[s]
 
-    for i in range(len(x)):
-        if grid[y[i]][x[i]] > 0:
-            n += 1
-    return n
 
 
 def start_timer():
@@ -134,8 +139,13 @@ def printProgressBar (iteration, total, length):
     if iteration == total: 
         print()
 
+
     
-grid = np.zeros((200,200))
+grid = np.zeros((200-82,200))
+x_arr, y_arr = get_neighbours_array(grid, RADIUS)
+print(x_arr[0], y_arr[0])
+active_neighbours_grid = np.zeros((200-82,200))
+
 active = 0
 for i in range(10):
     for j in range(10):
@@ -143,13 +153,25 @@ for i in range(10):
         if rng == 1:
             grid[i][j] = 20
             active += 1
+            for r in range(RADIUS):
+                if (r-j)**2+(r-i)**2 <= RADIUS**2:
+                    active_neighbours_grid[i+r][j+r] += 1
+                    active_neighbours_grid[i][j+r] += 1
+                    active_neighbours_grid[i+r][j] += 1
+                    if not(i < r or j < r):
+                        
+                        active_neighbours_grid[i-r][j-r] += 1
+                        active_neighbours_grid[i+r][j-r] += 1
+                        active_neighbours_grid[i-r][j+r] += 1
+                        active_neighbours_grid[i-r][j] += 1
+                        active_neighbours_grid[i][j-r] += 1
 # grid[0][0] = 20
 
 # defining electrically inactive points
-# mitral valve
+#mitral valve
 # for i in range(len(grid)-1):
 #     for j in range(len(grid)-1, len(grid)-82-1, -1):
-#         grid[j][i] = -1
+#         grid[j][i] = -2
 
 # vein centres
 veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
@@ -173,18 +195,16 @@ ITERATIONS = 500
 
 active_cells = np.zeros(ITERATIONS)
 
-x_arr, y_arr = get_neighbours_array(grid, RADIUS)
 
 print("x_arr length:", len(x_arr))
 
-ax.imshow(grid, animated=False)
 
 start_time = start_timer()
 printProgressBar(0, ITERATIONS, length = 50)
 for i in range(ITERATIONS):
     if i == 0:
         ax.imshow(grid, animated=True, interpolation='nearest')
-    new, active = update(grid, x_arr, y_arr)
+    new, active = update(grid, active_neighbours_grid, x_arr, y_arr)
     grid = new
     active_cells[i] = active
     im = ax.imshow(new, animated=True, interpolation='nearest')

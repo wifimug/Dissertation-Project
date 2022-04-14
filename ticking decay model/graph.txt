@@ -1,1 +1,1 @@
-active cells over iterations 418
+active cells over iterations 715

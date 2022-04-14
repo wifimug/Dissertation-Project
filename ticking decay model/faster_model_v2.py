@@ -24,11 +24,13 @@ REFRACTORY = 40
 def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
     """
     Updates the state of the current grid given
-    the x and y coordinates of the neighbours
+    the number of active neighbours in a circle radius
+    given the x and y coordinates of points in the circle
 
     return: state of the new grid
     """
     new_grid = copy.deepcopy(curr_grid)
+    new_neighbours_grid = copy.deepcopy(active_neighbours_grid)
     step = 0
     active = 0
     for i in range(len(curr_grid)):
@@ -40,21 +42,21 @@ def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
                 x = x_arr[step]
                 y = y_arr[step]
                 for k in range(len(x)):
-                    active_neighbours_grid[y[k]][x[k]] += 1
+                    new_neighbours_grid[y[k]][x[k]] += 1
 
             #when current cell is ON
             if curr_grid[i][j] > 0:
                 new_grid[i][j] -= 1
-                if curr_grid[i][j] == 0:
+                if new_grid[i][j] == 0:
                     x = x_arr[step]
                     y = y_arr[step]
                     for k in range(len(x)):
-                        if active_neighbours_grid > 0:
-                            active_neighbours_grid[y[k]][x[k]] -= 1
+                        new_neighbours_grid[y[k]][x[k]] -= 1
+                        #print("hi")
                     
             
             step += 1
-    return new_grid, active
+    return new_grid, new_neighbours_grid, active
 
 
 
@@ -141,10 +143,10 @@ def printProgressBar (iteration, total, length):
 
 
     
-grid = np.zeros((200-82,200))
+grid = np.zeros((200,200))
 x_arr, y_arr = get_neighbours_array(grid, RADIUS)
-print(x_arr[0], y_arr[0])
-active_neighbours_grid = np.zeros((200-82,200))
+#print(x_arr[0], y_arr[0])
+active_neighbours_grid = np.zeros((200,200))
 
 active = 0
 for i in range(10):
@@ -204,10 +206,10 @@ printProgressBar(0, ITERATIONS, length = 50)
 for i in range(ITERATIONS):
     if i == 0:
         ax.imshow(grid, animated=True, interpolation='nearest')
-    new, active = update(grid, active_neighbours_grid, x_arr, y_arr)
-    grid = new
+    grid, active_neighbours_grid, active = update(grid, active_neighbours_grid, x_arr, y_arr)
+    #grid = new
     active_cells[i] = active
-    im = ax.imshow(new, animated=True, interpolation='nearest')
+    im = ax.imshow(grid, animated=True, interpolation='nearest')
     ims.append([im])
     printProgressBar(i+1,ITERATIONS, length = 50)
 calc_time(start_time, start_timer())
@@ -215,7 +217,7 @@ calc_time(start_time, start_timer())
 #write data to file
 with open("data.txt", "w") as f:
     for im in ims:
-        f.write("%s" % i)
+        f.write("%s" % im)
 with open("graph.txt", "w") as f:
     f.write("active cells over iterations %s" % active)
 

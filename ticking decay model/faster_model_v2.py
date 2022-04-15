@@ -15,10 +15,17 @@ Precompute the neighbourhood cells
 > neighbourhood adjustable based on radius set
 '''
 
-THRESHOLD = 10
+THRESHOLD = 1
 RADIUS = 5
 REFRACTORY = 40
+ITERATIONS = 500
 
+
+
+grid = np.zeros((200,200))
+active_neighbours_grid = np.zeros((200,200))
+active_cells = np.zeros(ITERATIONS)
+active = 0
 
 
 def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
@@ -39,22 +46,16 @@ def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
             if curr_grid[i][j] == 0 and active_neighbours_grid[i][j] >= THRESHOLD:
                 new_grid[i][j] = REFRACTORY
                 active += 1
-                x = x_arr[step]
-                y = y_arr[step]
-                for k in range(len(x)):
-                    new_neighbours_grid[y[k]][x[k]] += 1
+
+                for k in range(len(x_arr[step])):
+                    new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] += 1
 
             #when current cell is ON
             if curr_grid[i][j] > 0:
                 new_grid[i][j] -= 1
                 if new_grid[i][j] == 0:
-                    x = x_arr[step]
-                    y = y_arr[step]
-                    for k in range(len(x)):
-                        new_neighbours_grid[y[k]][x[k]] -= 1
-                        #print("hi")
-                    
-            
+                    for k in range(len(x_arr[step])):
+                        new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] -= 1  
             step += 1
     return new_grid, new_neighbours_grid, active
 
@@ -71,15 +72,13 @@ def get_neighbours_array(init_grid, radius):
     """
     x_arr = []
     y_arr = []
-    for i in range(len(init_grid)):
-        for j in range(len(init_grid[0])):
-            x_temp, y_temp = points_in_circle(radius, i, j, len(init_grid[0]), len(init_grid))
+    for y in range(len(init_grid)):
+        for x in range(len(init_grid[0])):
+            x_temp, y_temp = points_in_circle(radius, x, y, len(init_grid[0]), len(init_grid))
 
             x_arr.append(x_temp)
             y_arr.append(y_temp)
 
-    #print(x_arr[:100])
-    #print(y_arr[:100])
     return x_arr, y_arr
 
 
@@ -95,17 +94,15 @@ def points_in_circle(radius, x0, y0, xub, yub):
     """
     x_arr = []
     y_arr = []
-    x_ = np.arange(x0 - radius - 1, x0 + radius + 1, dtype=int)
-    y_ = np.arange(y0 - radius - 1, y0 + radius + 1, dtype=int)
-    x, y = np.where((x_[:,np.newaxis] - x0)**2 + (y_ - y0)**2 <= radius**2)
-    for x, y in zip(x_[x], y_[y]):
-        if (x < xub and x >= 0) and (y < yub and y >= 0):
-            if not (x == x0 and y == y0):
-                x_arr.append(x)
-                y_arr.append(y)
+    for y in range(y0 - radius, y0 + radius + 1):
+        for x in range(x0 - radius, x0 + radius + 1):
+            if (x < xub and x >= 0 and y < yub and y >= 0) and not (y == y0 and x == x0):
+                if ((y - y0)**2 + (x - x0)**2)**0.5 <= radius:
+                    x_arr.append(x)
+                    y_arr.append(y)
+        
+
     return x_arr, y_arr
-
-
 
 
 
@@ -133,7 +130,7 @@ def calc_time(start, end):
 
 
 
-def printProgressBar (iteration, total, length):
+def print_progress_bar(iteration, total, length):
     percent = ("{0:.1f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = '█' * filledLength + '-' * (length - filledLength)
@@ -143,37 +140,37 @@ def printProgressBar (iteration, total, length):
 
 
     
-grid = np.zeros((200,200))
+#animate frame by frame
+fig, ax = plt.subplots()
+ims = []
+
 x_arr, y_arr = get_neighbours_array(grid, RADIUS)
 #print(x_arr[0], y_arr[0])
-active_neighbours_grid = np.zeros((200,200))
 
-active = 0
-for i in range(10):
-    for j in range(10):
-        rng = random.randint(0,1)
-        if rng == 1:
-            grid[i][j] = 20
-            active += 1
-            for r in range(RADIUS):
-                if (r-j)**2+(r-i)**2 <= RADIUS**2:
-                    active_neighbours_grid[i+r][j+r] += 1
-                    active_neighbours_grid[i][j+r] += 1
-                    active_neighbours_grid[i+r][j] += 1
-                    if not(i < r or j < r):
-                        
-                        active_neighbours_grid[i-r][j-r] += 1
-                        active_neighbours_grid[i+r][j-r] += 1
-                        active_neighbours_grid[i-r][j+r] += 1
-                        active_neighbours_grid[i-r][j] += 1
-                        active_neighbours_grid[i][j-r] += 1
-# grid[0][0] = 20
+
+# step = 0
+# for i in range(10):
+#     for j in range(10):
+#         rng = random.randint(0,1)
+#         if rng == 1:
+#             grid[i][j] = REFRACTORY
+#             active += 1
+#             for k in range(len(x_arr[j])):
+#                 active_neighbours_grid[y_arr[step][k]][x_arr[step][k]] += 1
+#             step += 1
+
+        
+
+grid[0][0] = 20
+for i in range(len(x_arr[0])):
+    active_neighbours_grid[y_arr[0][i]][x_arr[0][i]] += 1
+
 
 # defining electrically inactive points
-#mitral valve
-# for i in range(len(grid)-1):
-#     for j in range(len(grid)-1, len(grid)-82-1, -1):
-#         grid[j][i] = -2
+# mitral valve
+for i in range(len(grid)-1, len(grid)-82-1, -1):
+    for j in range(len(grid)):
+        grid[i][j] = -1
 
 # vein centres
 veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
@@ -188,43 +185,38 @@ for v in range(len(veins_x)):
                 grid[i][j] = -1
 
 
-#animate frame by frame
-fig, ax = plt.subplots()
-ims = []
-
-ITERATIONS = 500
 
 
-active_cells = np.zeros(ITERATIONS)
 
 
-print("x_arr length:", len(x_arr))
+
+#print("x_arr length:", len(x_arr))
 
 
 start_time = start_timer()
-printProgressBar(0, ITERATIONS, length = 50)
+print_progress_bar(0, ITERATIONS, length = 50)
 for i in range(ITERATIONS):
-    if i == 0:
-        ax.imshow(grid, animated=True, interpolation='nearest')
-    grid, active_neighbours_grid, active = update(grid, active_neighbours_grid, x_arr, y_arr)
-    #grid = new
+    new_grid, new_active_neighbours_grid, active = update(grid, active_neighbours_grid, x_arr, y_arr)
     active_cells[i] = active
     im = ax.imshow(grid, animated=True, interpolation='nearest')
     ims.append([im])
-    printProgressBar(i+1,ITERATIONS, length = 50)
+    grid = new_grid
+    active_neighbours_grid = new_active_neighbours_grid
+    print_progress_bar(i+1,ITERATIONS, length = 50)
 calc_time(start_time, start_timer())
 
-#write data to file
-with open("data.txt", "w") as f:
-    for im in ims:
-        f.write("%s" % im)
-with open("graph.txt", "w") as f:
-    f.write("active cells over iterations %s" % active)
+# #write data to file
+# with open("data.txt", "w") as f:
+#     for im in ims:
+#         f.write("%s" % im)
+# with open("graph.txt", "w") as f:
+#     for i in range(len(active_cells)):
+#         f.write("active: %s" % active_cells[i])
 
 ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
-                                repeat_delay=10)
+                                repeat_delay=100)
 plt.show()
 
-plt.plot(active_cells)
-plt.show()
+# plt.plot(active_cells)
+# plt.show()
 

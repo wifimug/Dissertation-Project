@@ -4,6 +4,7 @@ import matplotlib.animation as animation
 import copy
 import time
 import random
+import math
 
 '''
 Precompute the neighbourhood cells
@@ -13,22 +14,39 @@ Precompute the neighbourhood cells
 > active neighbour states changed each iteration instead
   of calculating number of active neighbours each iteration
 > neighbourhood adjustable based on radius set
+
+
+Modelling effects of restitution:
+
+RP = math.floor(121 * (1 - B * math.exp(-DI/K)))
+
 '''
+
+
+    
 
 THRESHOLD = 1
 RADIUS = 5
 REFRACTORY = 40
 ITERATIONS = 500
 
+B = 1
+K = 40
+
 
 
 grid = np.zeros((200,200))
 active_neighbours_grid = np.zeros((200,200))
+restitution_grid = np.zeros((200,200))
+rp_grid = np.zeros((200,200))
 active_cells = np.zeros(ITERATIONS)
 active = 0
 
+def calculate_rp(B, DI, K):
+    RP = math.floor(121 * (1 - B * math.exp(-DI/K)))
+    return RP
 
-def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
+def update(curr_grid, active_neighbours_grid, restitution_grid, rp_grid, x_arr, y_arr):
     """
     Updates the state of the current grid given
     the number of active neighbours in a circle radius
@@ -38,26 +56,32 @@ def update(curr_grid, active_neighbours_grid, x_arr, y_arr):
     """
     new_grid = copy.deepcopy(curr_grid)
     new_neighbours_grid = copy.deepcopy(active_neighbours_grid)
+    new_restitution_grid = copy.deepcopy(restitution_grid)
+    new_rp_grid = copy.deepcopy(rp_grid)
     step = 0
     active = 0
     for i in range(len(curr_grid)):
         for j in range(len(curr_grid[0])):
             #when current cell is OFF
+            if curr_grid[i][j] == 0:
+                new_restitution_grid[i][j] += 1
             if curr_grid[i][j] == 0 and active_neighbours_grid[i][j] >= THRESHOLD:
-                new_grid[i][j] = REFRACTORY
+                DI = new_restitution_grid[i][j] - new_rp_grid[i][j]
+                new_grid[i][j] = calculate_rp(B, DI, K)
+                new_rp_grid[i][j] = new_grid[i][j]
                 active += 1
-
                 for k in range(len(x_arr[step])):
                     new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] += 1
 
             #when current cell is ON
             if curr_grid[i][j] > 0:
                 new_grid[i][j] -= 1
+                new_restitution_grid[i][j] = 0
                 if new_grid[i][j] == 0:
                     for k in range(len(x_arr[step])):
                         new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] -= 1  
             step += 1
-    return new_grid, new_neighbours_grid, active
+    return new_grid, new_neighbours_grid, new_restitution_grid, new_rp_grid, active
 
 
 
@@ -96,14 +120,13 @@ def points_in_circle(radius, x0, y0, xub, yub):
     y_arr = []
     for y in range(y0 - radius, y0 + radius + 1):
         for x in range(x0 - radius, x0 + radius + 1):
-            if (x < xub and x >= 0 and y < yub and y >= 0) and not (y == y0 and x == x0):
+            if (x < xub and x >= 0 and y < yub and y >= 0) and (not (y == y0 and x == x0)):
                 if ((y - y0)**2 + (x - x0)**2)**0.5 <= radius:
                     x_arr.append(x)
                     y_arr.append(y)
         
 
     return x_arr, y_arr
-
 
 
 def start_timer():
@@ -165,7 +188,6 @@ for i in range(len(grid)):
         active_neighbours_grid[i][j] += sum
         c += 1
 
-
         
 
 # grid[0][0] = 20
@@ -203,7 +225,7 @@ for v in range(len(veins_x)):
 start_time = start_timer()
 print_progress_bar(0, ITERATIONS, length = 50)
 for i in range(ITERATIONS):
-    new_grid, new_active_neighbours_grid, active = update(grid, active_neighbours_grid, x_arr, y_arr)
+    new_grid, new_active_neighbours_grid, restitution_grid, rp_grid, active = update(grid, active_neighbours_grid, restitution_grid, rp_grid, x_arr, y_arr)
     active_cells[i] = active
     im = ax.imshow(grid, animated=True, interpolation='nearest')
     ims.append([im])
@@ -226,3 +248,4 @@ plt.show()
 
 plt.plot(active_cells)
 plt.show()
+

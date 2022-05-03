@@ -139,57 +139,59 @@ def print_progress_bar(iteration, total, length):
         print()
 
 
-    
-#animate frame by frame
-fig, ax = plt.subplots()
-ims = []
 
-x_arr, y_arr = get_neighbours_array(grid, RADIUS)
-#print(x_arr[0], y_arr[0])
+def left_atrium_setup():
+    #animate frame by frame
+    fig, ax = plt.subplots()
+    ims = []
 
-
-c = 0
-for i in range(10):
-    for j in range(10):
-        rng = random.randint(0,1)
-        if rng == 1:
-            grid[i][j] = REFRACTORY
-            active += 1
-
-for i in range(len(grid)):
-    for j in range(len(grid[0])):
-        sum = 0
-        for n in range(len(x_arr[c])):
-            if grid[y_arr[c][n]][x_arr[c][n]] > 0:
-                sum += 1
-        active_neighbours_grid[i][j] += sum
-        c += 1
+    x_arr, y_arr = get_neighbours_array(grid, RADIUS)
+    #print(x_arr[0], y_arr[0])
 
 
-        
+    c = 0
+    for i in range(10):
+        for j in range(10):
+            rng = random.randint(0,1)
+            if rng == 1:
+                grid[i][j] = REFRACTORY
+                active += 1
 
-# grid[0][0] = 20
-# for i in range(len(x_arr[0])):
-#     active_neighbours_grid[y_arr[0][i]][x_arr[0][i]] += 1
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            sum = 0
+            for n in range(len(x_arr[c])):
+                if grid[y_arr[c][n]][x_arr[c][n]] > 0:
+                    sum += 1
+            active_neighbours_grid[i][j] += sum
+            c += 1
 
 
-# defining electrically inactive points
-# mitral valve
-for i in range(len(grid)-1, len(grid)-82-1, -1):
-    for j in range(len(grid)):
-        grid[i][j] = -1
+            
 
-# vein centres
-veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
-veins_y = [25, 50, 25, 50]
-vein_radius = 15
+    # grid[0][0] = 20
+    # for i in range(len(x_arr[0])):
+    #     active_neighbours_grid[y_arr[0][i]][x_arr[0][i]] += 1
 
-# the 4 veins
-for v in range(len(veins_x)):
-    for i in range(max(veins_y) + vein_radius):
-        for j in range(max(veins_x) + vein_radius):
-            if ((j-veins_x[v])**2+(i-veins_y[v])**2) <= vein_radius**2:
-                grid[i][j] = -1
+
+    # defining electrically inactive points
+    # mitral valve
+    for i in range(len(grid)-1, len(grid)-82-1, -1):
+        for j in range(len(grid)):
+            grid[i][j] = -1
+
+    # vein centres
+    veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
+    veins_y = [25, 50, 25, 50]
+    vein_radius = 15
+
+    # the 4 veins
+    for v in range(len(veins_x)):
+        for i in range(max(veins_y) + vein_radius):
+            for j in range(max(veins_x) + vein_radius):
+                if ((j-veins_x[v])**2+(i-veins_y[v])**2) <= vein_radius**2:
+                    grid[i][j] = -1
+    return fig, ax, ims
 
 
 
@@ -199,30 +201,36 @@ for v in range(len(veins_x)):
 
 #print("x_arr length:", len(x_arr))
 
+def main():
+    fig, ax, ims = left_atrium_setup()
+    start_time = start_timer()
+    print_progress_bar(0, ITERATIONS, length = 50)
+    for i in range(ITERATIONS):
+        new_grid, new_active_neighbours_grid, active = update(grid, active_neighbours_grid, x_arr, y_arr)
+        active_cells[i] = active/(len(grid[0])*len(grid[1]))
+        im = ax.imshow(grid, animated=True, interpolation='nearest')
+        ims.append([im])
+        grid = new_grid
+        active_neighbours_grid = new_active_neighbours_grid
+        print_progress_bar(i+1,ITERATIONS, length = 50)
+    calc_time(start_time, start_timer())
 
-start_time = start_timer()
-print_progress_bar(0, ITERATIONS, length = 50)
-for i in range(ITERATIONS):
-    new_grid, new_active_neighbours_grid, active = update(grid, active_neighbours_grid, x_arr, y_arr)
-    active_cells[i] = active
-    im = ax.imshow(grid, animated=True, interpolation='nearest')
-    ims.append([im])
-    grid = new_grid
-    active_neighbours_grid = new_active_neighbours_grid
-    print_progress_bar(i+1,ITERATIONS, length = 50)
-calc_time(start_time, start_timer())
+    # #write data to file
+    # with open("data.txt", "w") as f:
+    #     for im in ims:
+    #         f.write("%s" % im)
+    # with open("graph.txt", "w") as f:
+    #     for i in range(len(active_cells)):
+    #         f.write("active: %s" % active_cells[i])
 
-# #write data to file
-# with open("data.txt", "w") as f:
-#     for im in ims:
-#         f.write("%s" % im)
-# with open("graph.txt", "w") as f:
-#     for i in range(len(active_cells)):
-#         f.write("active: %s" % active_cells[i])
+    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
+                                    repeat_delay=100)
+    plt.show()
 
-ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
-                                repeat_delay=100)
-plt.show()
 
-plt.plot(active_cells)
-plt.show()
+
+    plt.plot(active_cells)
+
+    plt.show()
+
+main()

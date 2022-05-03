@@ -25,28 +25,28 @@ RP = math.floor(121 * (1 - B * math.exp(-DI/K)))
 
     
 
-THRESHOLD = 1
-RADIUS = 5
+THRESHOLD = 15
+RADIUS = 10
 REFRACTORY = 40
 ITERATIONS = 500
 
-B = 1
-K = 40
+B = 0.5
+K = 30
 
 
 
 grid = np.zeros((200,200))
 active_neighbours_grid = np.zeros((200,200))
 restitution_grid = np.zeros((200,200))
-rp_grid = np.zeros((200,200))
 active_cells = np.zeros(ITERATIONS)
 active = 0
 
 def calculate_rp(B, DI, K):
     RP = math.floor(121 * (1 - B * math.exp(-DI/K)))
+    #print(RP)
     return RP
 
-def update(curr_grid, active_neighbours_grid, restitution_grid, rp_grid, x_arr, y_arr):
+def update(curr_grid, active_neighbours_grid, restitution_grid, x_arr, y_arr):
     """
     Updates the state of the current grid given
     the number of active neighbours in a circle radius
@@ -57,7 +57,6 @@ def update(curr_grid, active_neighbours_grid, restitution_grid, rp_grid, x_arr, 
     new_grid = copy.deepcopy(curr_grid)
     new_neighbours_grid = copy.deepcopy(active_neighbours_grid)
     new_restitution_grid = copy.deepcopy(restitution_grid)
-    new_rp_grid = copy.deepcopy(rp_grid)
     step = 0
     active = 0
     for i in range(len(curr_grid)):
@@ -65,23 +64,27 @@ def update(curr_grid, active_neighbours_grid, restitution_grid, rp_grid, x_arr, 
             #when current cell is OFF
             if curr_grid[i][j] == 0:
                 new_restitution_grid[i][j] += 1
-            if curr_grid[i][j] == 0 and active_neighbours_grid[i][j] >= THRESHOLD:
-                DI = new_restitution_grid[i][j] - new_rp_grid[i][j]
-                new_grid[i][j] = calculate_rp(B, DI, K)
-                new_rp_grid[i][j] = new_grid[i][j]
-                active += 1
-                for k in range(len(x_arr[step])):
-                    new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] += 1
+
+                #cell turns ON
+                if active_neighbours_grid[i][j] >= THRESHOLD:
+                    DI = new_restitution_grid[i][j]
+                    #print(DI)
+                    new_grid[i][j] = calculate_rp(B, DI, K)
+                    active += 1
+                    for k in range(len(x_arr[step])):
+                        new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] += 1
 
             #when current cell is ON
             if curr_grid[i][j] > 0:
-                new_grid[i][j] -= 1
                 new_restitution_grid[i][j] = 0
+                new_grid[i][j] -= 1
+                #cell turns OFF
                 if new_grid[i][j] == 0:
+                    new_restitution_grid[i][j] += 1
                     for k in range(len(x_arr[step])):
                         new_neighbours_grid[y_arr[step][k]][x_arr[step][k]] -= 1  
             step += 1
-    return new_grid, new_neighbours_grid, new_restitution_grid, new_rp_grid, active
+    return new_grid, new_neighbours_grid, new_restitution_grid, active
 
 
 
@@ -172,9 +175,11 @@ x_arr, y_arr = get_neighbours_array(grid, RADIUS)
 
 
 c = 0
+
 for i in range(10):
     for j in range(10):
         rng = random.randint(0,1)
+        rng = 1
         if rng == 1:
             grid[i][j] = REFRACTORY
             active += 1
@@ -194,12 +199,13 @@ for i in range(len(grid)):
 # for i in range(len(x_arr[0])):
 #     active_neighbours_grid[y_arr[0][i]][x_arr[0][i]] += 1
 
-
+num_inactive = 0
 # defining electrically inactive points
 # mitral valve
 for i in range(len(grid)-1, len(grid)-82-1, -1):
     for j in range(len(grid)):
         grid[i][j] = -1
+        num_inactive += 1
 
 # vein centres
 veins_x = [25, 50, len(grid[0])-25, len(grid[0])-50]
@@ -212,25 +218,41 @@ for v in range(len(veins_x)):
         for j in range(max(veins_x) + vein_radius):
             if ((j-veins_x[v])**2+(i-veins_y[v])**2) <= vein_radius**2:
                 grid[i][j] = -1
-
-
-
-
-
+                num_inactive += 1
 
 
 #print("x_arr length:", len(x_arr))
 
+num_total_active_cells = len(grid)*len(grid) - num_inactive
+print("grid", len(grid), "other", len(grid[0]), "multiply", len(grid)*len(grid[0]))
+print("")
 
 start_time = start_timer()
+pulse_timer = start_timer()
 print_progress_bar(0, ITERATIONS, length = 50)
+
 for i in range(ITERATIONS):
-    new_grid, new_active_neighbours_grid, restitution_grid, rp_grid, active = update(grid, active_neighbours_grid, restitution_grid, rp_grid, x_arr, y_arr)
-    active_cells[i] = active
+    if (start_timer()-pulse_timer)/60 > 0.2:
+        c = 0
+        for i in range(10):
+            for j in range(10):
+                grid[i][j] = 1
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                sum = 0
+                for n in range(len(x_arr[c])):
+                    if grid[y_arr[c][n]][x_arr[c][n]] > 0:
+                        sum += 1
+                active_neighbours_grid[i][j] += sum
+                c += 1
+        
+        pulse_timer = start_timer()
+                
+    grid, active_neighbours_grid, restitution_grid, active = update(grid, active_neighbours_grid, restitution_grid, x_arr, y_arr)
+    active_cells[i] = active/num_total_active_cells
     im = ax.imshow(grid, animated=True, interpolation='nearest')
     ims.append([im])
-    grid = new_grid
-    active_neighbours_grid = new_active_neighbours_grid
+
     print_progress_bar(i+1,ITERATIONS, length = 50)
 calc_time(start_time, start_timer())
 
@@ -245,6 +267,7 @@ calc_time(start_time, start_timer())
 ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,
                                 repeat_delay=100)
 plt.show()
+
 
 plt.plot(active_cells)
 plt.show()

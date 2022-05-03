@@ -38,7 +38,7 @@ THRESHOLD = 1
 REFRACTORY_PERIOD = 1
 
 #active cell time in seconds
-ACTIVE_TIME = 50
+ACTIVE_TIME = 0.5
 
 RADIUS = 3
 
@@ -79,9 +79,9 @@ def update(curr_display_grid, curr_rp_grid, curr_at_grid):
             if curr_display_grid[i][j] == 1:
                 
                 if at_time >= ACTIVE_TIME:
-                    print("at_time", at_time)
+                    # print("at_time", at_time)
                     #cell turns off
-                    print("cell turning off")
+                    # print("cell turning off")
                     new_display_grid[i][j] = 0
                     #ap is 0 now that it's OFF
                     new_at_grid[i][j] = start_timer()
@@ -196,8 +196,8 @@ SIZE = (50,50)
 #start time
 START_TIME = time.time()
 og_grid = np.zeros(SIZE)
-og_grid[25][25] = 1
-og_grid[25][24] = 1
+og_grid[0][0] = 1
+og_grid[0][1] = 1
 
 
 

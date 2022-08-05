@@ -1,4 +1,4 @@
-# My-Projects #
+# Dissertation-Project #
 ## Cellular Automaton Model of the Heart ❤️ ##
 
 This documents the progress with my dissertation project. I named it badly and don't know how to change the name so I'm stuck with the name "My-Projects" for now. 
